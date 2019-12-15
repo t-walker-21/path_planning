@@ -96,3 +96,35 @@ def graph_search(source, goal, grid, dfs=0):
         visited.append(current_node)
 
         grid.color_node(current_node, (0, 0, 100))
+
+
+"""
+
+Class definition for graph
+"""
+
+class Graph(object):
+    def __init__(self):
+        self.vertices = []
+        self.edges = {}
+
+    def add_vertex(self, node):
+
+        if (node in self.vertices):
+            print "Vertex already in graph"
+            return
+
+        self.vertices.append(node)
+        self.edges[node] = []
+
+    def add_edge(self, edge):
+        source = edge[0]
+        current_adj_list = self.edges[source]
+        current_adj_list.append(edge[1])
+
+    def print_graph(self):
+        for vertex in self.vertices:
+            print vertex , [edge  for edge in self.edges[vertex]]
+
+    def get_neighbors(self, vertex):
+        return self.edges[vertex]
