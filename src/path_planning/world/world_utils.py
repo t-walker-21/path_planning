@@ -12,7 +12,7 @@ class World():
         Initialize empty world
         """
 
-        self.world = np.ones(np.append(size, 3))
+        self.world = np.ones(np.append(size, 3)) * 255
         self.name = name
         self.size = size
 
@@ -22,7 +22,7 @@ class World():
         Display the world
         """
 
-        cv2.imshow(self.name, self.world)
+        cv2.imshow(self.name, cv2.resize(self.world, (300, 300)))
         cv2.waitKey(wait)
 
     def add_obstacle(self, position, size, shape, color=(0, 0, 0)):
@@ -52,3 +52,14 @@ class World():
         size = np.random.randint(20, radius_lim)
 
         self.add_obstacle((pos_x, pos_y), size, "circle")
+
+
+    def color_node(self, node, color):
+        """
+
+        Set a node (pixel) to a particular color
+        """
+
+        self.world[node[0]][node[1]][0] = color[0]
+        self.world[node[0]][node[1]][1] = color[1]
+        self.world[node[0]][node[1]][2] = color[2]
