@@ -4,21 +4,24 @@ Utilities for path planning
 """
 import numpy as np
 from graph.grah_utils import Graph
+import time
+import cv2
 
 """
 
 Class for RRT path planning
 """
 class Planner(object):
-    def __init__(self, world, gamma=0.2, iters=1000, reach=2):
+    def __init__(self, world, gamma=0.2, iters=1000, reach=10, threshold=7):
         self.world = world.world.copy()
         self.world_h = world
         self.iters = iters
         self.gamma = gamma
         self.graph = Graph()
         self.reach = reach
+        self.threshold = threshold
 
-    def find_path(self, start, goal):
+    def find_path(self, start, goal, visualize=False):
         """
 
         Given a start and goal node, compute a goal
@@ -26,8 +29,8 @@ class Planner(object):
 
         # Add start and goal node to world
 
-        self.world_h.color_node(start, thickness=5)
-        self.world_h.color_node(goal, thickness=5)
+        self.world_h.color_node(start, color=(0, 0, 100), thickness=5)
+        self.world_h.color_node(goal, color=(0, 100, 0), thickness=5)
 
         # Add start node to graph
 
@@ -38,33 +41,37 @@ class Planner(object):
 
             pt = self.get_random_point(self.world, goal)
 
-            """
-            # If the graph is empty, add this initial point and return
-            if (len(self.graph.vertices) == 0):
-                self.graph.add_vertex(pt)
-
-                print (pt)
-
-                self.world_h.color_node(pt)
-
-                self.world_h.show_world(0)
-                break"""
-
             # If the graph is not empty, find the closest node in the graph and add it as an edge
             index = self.get_closest_point(pt)
 
-            # Get unit vector pointing from index to current point
+            # Get vector pointing from index to current point
 
-            unit = self.get_unit_vector(pt, index)
+            vector = self.get_unit_vector(pt, index)
 
-            # Using the unit vector and reach, calculate position of new node
-
-            new_node_pos = unit * self.reach
+            new_node_pos =  tuple(vector + np.array(self.graph.vertices[index]))
 
             # If the new node is reachable, add it to the graph and world. Draw a line too
 
-            self.graph.add_vertex(new_node_pos)
-            self.graph.add_edge((self.graph.vertices[index], new_node_pos))
+            if self.is_reachable(new_node_pos, index):
+                self.graph.add_vertex(new_node_pos)
+                self.graph.add_edge((self.graph.vertices[index], new_node_pos))
+
+                self.world_h.color_node(new_node_pos)
+                self.world_h.draw_line(new_node_pos, self.graph.vertices[index])
+
+
+            else:
+                print "the new node could not be reached"
+
+            # Check if new node is within a threshold distance to goal
+            
+            if (np.linalg.norm(np.array(new_node_pos) - np.array(goal)) <= self.threshold):
+                print "Found a path!"
+                self.world_h.show_world(0)
+                break
+
+            if visualize:
+                self.world_h.show_world(70)
 
     def get_random_point(self, world, goal):
         """
@@ -72,7 +79,9 @@ class Planner(object):
         Get a random point within the bounds, based on gamma, sample goal point
         """
 
-        if (self.gamma > np.random.rand(1)):
+        chance = np.random.rand(1)
+
+        if (self.gamma > chance):
             return goal
 
         # Get limits of world
@@ -87,15 +96,14 @@ class Planner(object):
 
 
     def get_unit_vector(self, pt, index):
-        pass
+        vector = np.array(pt) - np.array(self.graph.vertices[index])
 
-    def draw_line(self, pt1, pt2, color=(0, 0, 0)):
-        """
+        mag = np.linalg.norm(vector)
 
-        Draw a line connecting two points
-        """
+        return ((vector / mag) * self.reach).astype(np.int32)
 
-        cv2.line(self.world, pt1, pt2, color)
+    def is_reachable(self, start, goal):
+        return True
 
     def get_closest_point(self, node):
         """
