@@ -113,7 +113,7 @@ class Planner(object):
 
 
     def get_unit_vector(self, pt, index):
-        vector = np.array(pt) - np.array(self.graph.vertices[index])
+        vector = np.array(pt) - np.array(self.graph.vertices[index]) + np.array([1e-10, 1e-10])
 
         mag = np.linalg.norm(vector)
 
@@ -147,9 +147,6 @@ class Planner(object):
 
         y_low = center[1] - width
         y_high = center[1] + width
-
-        print center
-        print "center"
 
         for i in range(x_low, x_high):
             for j in range(y_low, y_high):
