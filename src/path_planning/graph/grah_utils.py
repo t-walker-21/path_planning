@@ -34,26 +34,16 @@ def generate_neighbors(node, world_size):
 
     return neighbors
 
-def graph_search(source, goal, grid, dfs=0):
+def graph_search(graph, source, goal, dfs=0):
     """
 
     Graph search
     """
-    
-    hash_dict = {}
 
     visited = []
     to_visit = []
 
     path = []
-
-    # Put source node in open list
-
-    #src = str(source)
-
-    #src_hash = str(hash(src)) + ","
-
-    #hash_dict[src] = src_hash
 
     to_visit.append(source)
     path.append(source)
@@ -64,38 +54,72 @@ def graph_search(source, goal, grid, dfs=0):
 
         path.append(current_node)
 
+        print "current node: " , current_node
+
         # Are we done?
 
         if current_node == goal:
-            print ("found path to node")
+            print ("found path to node in dfs")
 
             #print visited
 
             path.append(goal)
 
-            print path
-
-            return path
+            return visited
 
         # Get neighbors of current node
-
-        neighbors = generate_neighbors(current_node, grid.world.shape)
+        neighbors = graph.edges[current_node]
 
         if len(neighbors) == 0:
-            path.remove(-1)
+            path.pop(-1)
 
         for neighbor in neighbors:
 
-            # Add neighbors to open list if they have not been visited and if it is not an obstacle
+            # Add neighbors to open list if they have not been visited 
 
-            if not ((grid.world[neighbor[0]][neighbor[1]] == 0).all() or neighbor in visited):
+            if not (neighbor in visited):
                 to_visit.insert(-1 * dfs, neighbor)
 
         # Done, now mark this node as visited
 
         visited.append(current_node)
 
-        grid.color_node(current_node, (0, 0, 100))
+
+def graph_search_recursive(graph, source, goal, path, visited, dfs=0):
+    """
+
+    Recursive definition of graph search (maintains backpointer for path)
+    """
+
+    # Base case
+    
+    if source == goal:
+        path.append(goal)
+        return True
+    
+    to_visit = []
+
+    neighbors = graph.edges[source]
+
+    for neighbor in neighbors:
+        if not (neighbor in visited):
+            to_visit.append(neighbor)
+
+    if len(to_visit) == 0:
+        return False
+
+    else:
+
+        for next_source in to_visit:
+            if (graph_search_recursive(graph, next_source, goal, path, visited)):
+                path.append(source)
+                return path
+
+            else:
+                visited.append(next_source)
+
+    
+
 
 
 """
