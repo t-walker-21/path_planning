@@ -12,7 +12,7 @@ import cv2
 Class for RRT path planning
 """
 class Planner(object):
-    def __init__(self, world, gamma=0.2, iters=5000, reach=10, threshold=7):
+    def __init__(self, world, gamma=0.1, iters=5000, reach=10, threshold=7):
         self.world = world.world.copy()
         self.world_h = world
         self.iters = iters
@@ -125,7 +125,7 @@ class Planner(object):
         Function to determine whether the vector b/w start and goal could be followed
         """
 
-        if (self.world[start[1]][start[0]] == 0).all():
+        if (self.window(start)):
             return False
 
         return True
@@ -133,6 +133,34 @@ class Planner(object):
     def draw_final_path(self, path):
         for node in path:
             self.world_h.color_node(node, color=(100, 0, 100))
+
+    def window(self, center, win=11):
+        """
+
+        Place a window around the point and check for collison
+        """
+
+        width = int(win / 2.0)
+
+        x_low = center[0] - width
+        x_high = center[0] + width
+
+        y_low = center[1] - width
+        y_high = center[1] + width
+
+        print center
+        print "center"
+
+        for i in range(x_low, x_high):
+            for j in range(y_low, y_high):
+
+                if ((self.world[j][i] == 0).all()):
+                    return True
+
+        
+
+        return False
+
 
     def get_closest_point(self, node):
         """
