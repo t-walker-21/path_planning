@@ -22,7 +22,7 @@ class World():
         Display the world
         """
 
-        cv2.imshow(self.name, cv2.resize(self.world, (300, 300)))
+        cv2.imshow(self.name, self.world)
         cv2.waitKey(wait)
 
     def add_obstacle(self, position, size, shape, color=(0, 0, 0)):
@@ -54,12 +54,17 @@ class World():
         self.add_obstacle((pos_x, pos_y), size, "circle")
 
 
-    def color_node(self, node, color):
+    def color_node(self, node, color=(100, 0, 0), thickness=-1):
         """
 
-        Set a node (pixel) to a particular color
+        Set a node to a particular circle with color
+        """
+        cv2.circle(self.world, node, 3, color, thickness) 
+
+    def draw_line(self, pt1, pt2, color=(0, 0, 0)):
         """
 
-        self.world[node[0]][node[1]][0] = color[0]
-        self.world[node[0]][node[1]][1] = color[1]
-        self.world[node[0]][node[1]][2] = color[2]
+        Draw a line connecting two points
+        """
+
+        cv2.line(self.world, pt1, pt2, color)
