@@ -3,7 +3,7 @@
 Utilities for path planning
 """
 import numpy as np
-from graph.grah_utils import Graph
+from graph.grah_utils import Graph, graph_search, graph_search_recursive
 import time
 import cv2
 
@@ -12,7 +12,7 @@ import cv2
 Class for RRT path planning
 """
 class Planner(object):
-    def __init__(self, world, gamma=0.2, iters=1000, reach=10, threshold=7):
+    def __init__(self, world, gamma=0.2, iters=5000, reach=10, threshold=7):
         self.world = world.world.copy()
         self.world_h = world
         self.iters = iters
@@ -61,17 +61,34 @@ class Planner(object):
 
 
             else:
-                print "the new node could not be reached"
+                #print "the new node could not be reached"
+                self.world_h.color_node(new_node_pos, color=(0,10,10))
+                
 
             # Check if new node is within a threshold distance to goal
             
             if (np.linalg.norm(np.array(new_node_pos) - np.array(goal)) <= self.threshold):
                 print "Found a path!"
                 self.world_h.show_world(0)
+                self.graph.add_vertex(goal)
+                self.graph.add_edge((new_node_pos, goal))
+
+                #path = graph_search(self.graph, start, goal)
+                path = []
+                visited = []
+
+                path = graph_search_recursive(self.graph, start, goal, path, visited)
+
+
+                self.draw_final_path(path)
+                self.world_h.show_world(0)
+
                 break
 
             if visualize:
-                self.world_h.show_world(70)
+                self.world_h.show_world(visualize)
+
+        
 
     def get_random_point(self, world, goal):
         """
@@ -103,7 +120,19 @@ class Planner(object):
         return ((vector / mag) * self.reach).astype(np.int32)
 
     def is_reachable(self, start, goal):
+        """
+
+        Function to determine whether the vector b/w start and goal could be followed
+        """
+
+        if (self.world[start[1]][start[0]] == 0).all():
+            return False
+
         return True
+
+    def draw_final_path(self, path):
+        for node in path:
+            self.world_h.color_node(node, color=(100, 0, 100))
 
     def get_closest_point(self, node):
         """
