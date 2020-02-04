@@ -12,7 +12,7 @@ import cv2
 Class for RRT path planning
 """
 class Planner(object):
-    def __init__(self, world, gamma=0.1, iters=5000, reach=10, threshold=7):
+    def __init__(self, world, gamma=0.1, iters=15000, reach=10, threshold=7):
         self.world = world.world.copy()
         self.world_h = world
         self.iters = iters
@@ -125,7 +125,7 @@ class Planner(object):
         Function to determine whether the vector b/w start and goal could be followed
         """
 
-        if (self.window(start)):
+        if (self.window(start, win=21)):
             return False
 
         return True
@@ -142,11 +142,11 @@ class Planner(object):
 
         width = int(win / 2.0)
 
-        x_low = center[0] - width
-        x_high = center[0] + width
+        x_low = max(center[0] - width, 0)
+        x_high = min(center[0] + width, 799)
 
-        y_low = center[1] - width
-        y_high = center[1] + width
+        y_low = max(center[1] - width, 0)
+        y_high = min(center[1] + width, 799)
 
         for i in range(x_low, x_high):
             for j in range(y_low, y_high):

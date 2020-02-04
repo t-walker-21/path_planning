@@ -36,6 +36,12 @@ class World():
             # Add circle to map
             cv2.circle(self.world, position, size, color, -1) 
 
+        elif shape == "rect":
+
+            #Add rectangle to map
+            #img, pt1, pt2, color, thickness=1, lineType=8, shift=0
+            cv2.rectangle(self.world, position[0], position[1], color, -1)
+
     def add_random_obstacle(self):
         """
 

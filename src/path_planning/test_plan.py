@@ -5,8 +5,11 @@ w = World((800, 800))
 
 
 
-for _ in range(30):
-    w.add_random_obstacle()
+"""for _ in range(30):
+    w.add_random_obstacle()"""
+
+w.add_obstacle(((30,30),(500,500)), 10, shape='rect')
+#w.add_obstacle(((630, 30),(650,800)), 10, shape='rect')
 
 start = (20, 20)
 goal = (700, 500)
@@ -15,7 +18,7 @@ goal = (700, 500)
 
 p = Planner(w)
 
-p.find_path(start, goal, visualize=1)
+p.find_path(start, goal, visualize=10)
 
 exit()
 
