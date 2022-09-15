@@ -7,20 +7,19 @@ if __name__ == '__main__':
 
     
 
-    arm = RobotArm(link_1_length=60, link_2_length=30, joint_1=0, joint_2=0)
+    arm = RobotArm(link_1_length=60, link_2_length=90, joint_1=0, joint_2=0)
     
     world_size = 700
     world = np.ones((world_size, world_size, 3)) * 255
 
-    #cv2.rectangle(world, (280, 300), (335, 335), (0, 0, 0), -1)
-    cv2.rectangle(world, (405, 300), (475, 335), (0, 0, 0), -1)
+    cv2.rectangle(world, (280, 300), (375, 335), (0, 0, 0), -1)
+    cv2.rectangle(world, (445, 290), (535, 315), (0, 0, 0), -1)
+    cv2.rectangle(world, (415, 320), (535, 340), (0, 0, 0), -1)
 
-    desired_x_world = 1 + 350
-    desired_y_world = -87 + 350
+    desired_x_world = 50 + 350
+    desired_y_world = -98 + 350
 
     cv2.circle(world, (desired_x_world, desired_y_world), 5, (0, 0, 200), -1)
-    cv2.imshow("world", world)
-    cv2.waitKey(0)
 
     #world[desired_y_world, desired_x_world] = [0, 0, 0]
 
@@ -34,6 +33,17 @@ if __name__ == '__main__':
 
     path = planner.a_star()
 
+    viz_frame = world.copy()
+
+    for pt in arm.link_1_origin_points:
+        cv2.circle(viz_frame, (pt[0] + world_size // 2, pt[1] + world_size // 2), 3, (200, 0, 0), 1)
+
+    for pt in arm.link_2_origin_points:
+        cv2.circle(viz_frame, (pt[0] + world_size // 2, pt[1] + world_size // 2), 3, (0, 200, 0), 1)
+
+    cv2.imshow("world", viz_frame)
+    cv2.waitKey(0)
+
     if path is None:
 
         print ("Could not find a path with solution 1... Inverting joint_2")
@@ -46,6 +56,7 @@ if __name__ == '__main__':
         if path is None:
             print ("no solution found")
             exit()
+
 
     for sub_pt in path:
     
@@ -71,3 +82,5 @@ if __name__ == '__main__':
 
         cv2.imshow("world", viz_frame)
         cv2.waitKey(100)
+
+    cv2.waitKey(0)
