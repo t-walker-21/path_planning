@@ -20,7 +20,7 @@ class ArmPlanner:
 
         self.do_viz = do_viz
 
-        self.increment = 0.05
+        self.increment = 1
         self.goal_thresh = 3e-2
 
         self.robot_arm = robot_arm
@@ -29,6 +29,25 @@ class ArmPlanner:
         self.joint_2_lim = [-np.pi/2, np.pi/2]
 
         self.max_iters = max_iters
+
+        self.grid_size = 200
+        self.step_size = 2 * (2*np.pi / self.grid_size)
+
+        #self.configuration_space = np.zeros((self.grid_size, self.grid_size))
+
+    def continous_to_discrete_joint_space(self, joint_1, joint_2):
+
+        joint_1_discrete = np.ceil(joint_1 / self.step_size) + self.grid_size // 2
+        joint_2_discrete = np.ceil(joint_2 / self.step_size) + self.grid_size // 2
+
+        return joint_1_discrete, joint_2_discrete
+
+    def discrete_to_continuous_joint_space(self, grid_x, grid_y):
+
+        joint_1_continuous = (grid_x - self.grid_size // 2) * self.step_size
+        joint_2_continuous = (grid_y - self.grid_size // 2) * self.step_size
+
+        return joint_1_continuous, joint_2_continuous
 
     def check_collision(self, joint_1, joint_2):
         """
@@ -47,7 +66,7 @@ class ArmPlanner:
             if (self.costmap[point_world[1], point_world[0]] == (0, 0, 0)).all():
                 return True
 
-            cv2.circle(viz_im, point_world, 6, (0, 0,20), -1)
+            #cv2.circle(viz_im, point_world, 6, (0, 0,20), -1)
 
             #obstacle_points = np.where(self.costmap == (0, 0, 0))[:2]
             #query = (obstacle_points[0][0], obstacle_points[1][0])
@@ -65,10 +84,10 @@ class ArmPlanner:
             if (self.costmap[point_world[1], point_world[0]] == (0, 0, 0)).all():
                 return True
 
-            cv2.circle(viz_im, point_world, 6, (20, 0,20), -1)
+            #cv2.circle(viz_im, point_world, 6, (20, 0,20), -1)
 
-        cv2.imshow("debug", viz_im)
-        cv2.waitKey(1)
+        #cv2.imshow("debug", viz_im)
+        #cv2.waitKey(1)
 
         return False
 
@@ -132,6 +151,10 @@ class ArmPlanner:
     def dist(self, pair_1):
 
         return ((pair_1[0] - self.desired_j1)**2 + (pair_1[1] - self.desired_j2)**2)**0.5
+
+    def dist_continous(self, pair_1, pair_2):
+
+        return ((pair_1[0] - pair_2[0])**2 + (pair_1[1] - pair_2[1])**2)**0.5
     
     def a_star(self):
 
@@ -145,8 +168,15 @@ class ArmPlanner:
         print ("Pathing toward: ")
         print (self.desired_j1)
         print (self.desired_j2)
+        print ()
 
-        start_point = [self.current_j1, self.current_j2]
+        start_point = self.continous_to_discrete_joint_space(self.current_j1, self.current_j2)
+        goal_point = self.continous_to_discrete_joint_space(self.desired_j1, self.desired_j2)
+
+        print (goal_point)
+        print ()
+        
+        start_point = (start_point[0], start_point[1])
         queue = []
         heapq.heappush(queue, (0, [start_point]))
         visited = set()
@@ -158,38 +188,41 @@ class ArmPlanner:
             node = path[-1]
             #print (node_cost, node)
 
+            #print ("debug")
             #print (node)
 
-            node_hash = (int(node[0]*100), int(node[1]*100))
-
-            if node_hash in visited:
+            if node in visited:
                 continue
-
-            else:
-                print ("node: {} found in visited".format(node_hash))
 
             #print (node_hash)
 
-            error = ((node[0] - self.desired_j1)**2 + (node[1] - self.desired_j2)**2)**0.5
+            if node == goal_point:
 
-            if error <= self.goal_thresh:
-                return path
+                path_continuous = []
+                for path_point in path:
+                    path_continuous.append(self.discrete_to_continuous_joint_space(path_point[0], path_point[1]))
+
+                return path_continuous
 
             potential_neigh = []
             
-            potential_neigh.append([node[0] - self.increment, node[1]])
-            potential_neigh.append([node[0] + self.increment, node[1]])
-            potential_neigh.append([node[0], node[1] - self.increment])
-            potential_neigh.append([node[0], node[1] + self.increment])
-            potential_neigh.append([node[0] + self.increment, node[1] + self.increment])
-            potential_neigh.append([node[0] - self.increment, node[1] - self.increment])
-            potential_neigh.append([node[0] + self.increment, node[1] - self.increment])
-            potential_neigh.append([node[0] - self.increment, node[1] + self.increment])
+            potential_neigh.append((node[0] - self.increment, node[1]))
+            potential_neigh.append((node[0] + self.increment, node[1]))
+            potential_neigh.append((node[0], node[1] - self.increment))
+            potential_neigh.append((node[0], node[1] + self.increment))
+            potential_neigh.append((node[0] + self.increment, node[1] + self.increment))
+            potential_neigh.append((node[0] - self.increment, node[1] - self.increment))
+            potential_neigh.append((node[0] + self.increment, node[1] - self.increment))
+            potential_neigh.append((node[0] - self.increment, node[1] + self.increment))
 
             
             for neigh in potential_neigh:
 
                 path_ = path.copy()
+
+                if neigh[0] < 0 or neigh[0] > self.grid_size or neigh[1] < 0 or neigh[1] > self.grid_size:
+                    continue
+
                 path_.append(neigh)
 
                 """
@@ -200,10 +233,12 @@ class ArmPlanner:
                     continue
                 """
 
-                if not self.check_collision(neigh[0], neigh[1]):
-                    heapq.heappush(queue, (0 + self.dist(neigh), path_))
+                joint_1_continuous, joint_2_continuous = self.discrete_to_continuous_joint_space(neigh[0], neigh[1])
 
-            visited.add(node_hash)
+                if not self.check_collision(joint_1_continuous, joint_2_continuous):
+                    heapq.heappush(queue, (self.dist_continous(neigh, goal_point), path_))
+
+            visited.add(node)
             iter_count += 1
 
             if iter_count == self.max_iters:
